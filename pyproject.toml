@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "database-operations-sentinel"
+version = "0.1.0"
+description = "Enterprise database operations, health telemetry, replication lag monitoring, and automated failover policy governance for PostgreSQL and SQL Server / Azure SQL"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [{ name = "Soumya Debnath" }]
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Database",
+    "Topic :: System :: Monitoring"
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
