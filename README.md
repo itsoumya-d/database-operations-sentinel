@@ -94,6 +94,36 @@ print(format_health_report_markdown(report))
 - **Configurable Governance Policies**: Custom maximum replication lag, connection utilization thresholds, log space limits, and quorum requirements.
 - **Failover Safety Circuit-Breakers**: Blocks unsafe promotions if replica lag violates strict recovery point objectives (RPO).
 - **Diagnostics Reporting**: Structured JSON and Markdown serialization for integration with PagerDuty, Alertmanager, or SRE dashboards.
+- **Fencing Token & Lease Governance**: Monotonic write lease tokens with quorum consensus verification preventing split-brain writes during failover.
+
+## Fencing Token Coordinator
+
+To eliminate split-brain write conflicts when a partitioned primary recovers after failover, `FencingLeaseCoordinator` issues strictly increasing monotonic lease tokens:
+
+- **Monotonic Terms:** Every promotion increments the cluster term and token ID. Older primaries attempting writes with stale tokens are rejected.
+- **Quorum Verification:** Lease acquisition and renewals require majority quorum confirmations across witness nodes.
+- **Preemption & Revocation:** Orderly step-down revokes leases; failover promotions preempt older holder tokens immediately.
+
+### Example Usage
+
+```python
+from sentinel.fencing import FencingLeaseCoordinator
+
+coordinator = FencingLeaseCoordinator(cluster_id="pg-prod", min_quorum_nodes=2)
+
+# New primary candidate acquires lease with quorum confirmation
+token = coordinator.acquire_lease(
+    candidate_node_id="pg-node-1",
+    quorum_nodes=["witness-1", "replica-2"],
+    lease_duration_seconds=30.0,
+)
+
+# Storage layer validates token before accepting write operations
+assert coordinator.validate_token(token) is True
+```
+
+### Operational Invariants
+- Tokens are immutable and tied to the active term. Lease validation requires both term matching and unexpired epoch duration.
 
 ## License
 
